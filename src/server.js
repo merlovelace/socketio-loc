@@ -57,7 +57,7 @@ io.on('connection', (socket) => {
             socket.roomId = roomId;
 
             const totalRoomUsers = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
-            io.emit('userJoinedRoom', {
+            io.to(roomId).emit('userJoinedRoom', {
                 userId: socket.id,
                 position: data.position,
                 totalConnectedUsers: totalRoomUsers
@@ -96,7 +96,7 @@ io.on('connection', (socket) => {
                 io.in(roomId).socketsLeave(roomId)
             }
 
-            io.emit('userDisconnectedRoom', {
+            io.to(roomId).emit('userDisconnectedRoom', {
                 totalConnectedUsers: totalRoomUsers
             });
         }catch (e) {
