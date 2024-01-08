@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`)
 
     socket.on('joinRoom',  async (data) => {
-        console.log('buradayımmmmmmmmmmmmmmmmmmmmmmmmmmmmm')
+
         try{
             let roomId;
             const filteredData = rooms.filter(el => el.eventId === data.eventId)
@@ -95,6 +95,10 @@ io.on('connection', (socket) => {
             if(totalRoomUsers.length === 0){
                 io.in(roomId).socketsLeave(roomId)
             }
+
+            io.emit('userDisconnectedRoom', {
+                totalConnectedUsers: totalRoomUsers
+            });
         }catch (e) {
             console.log(e)
             return e
