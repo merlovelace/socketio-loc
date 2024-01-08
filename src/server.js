@@ -45,7 +45,9 @@ io.on('connection', (socket) => {
 
             const roomExists = io.sockets.adapter.rooms.has(roomId);
             if (!roomExists) {
-                return 'Harita bulunmamaktadır.'
+                io.to(`${socket.id}`).emit('roomJoined', {
+                    status: 'ERROR'
+                })
             }
 
             socket.join(roomId);
@@ -78,17 +80,17 @@ io.on('connection', (socket) => {
             const roomId = socket.roomId;
             if (roomId) {
                 socket.leave(roomId);
-                delete socket.roomId
             }
 
             const totalRoomUsers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
             if (totalRoomUsers.length === 0) {
-                io.in(roomId).socketsLeave(roomId)
+                io.sockets.adapter.rooms.delete(roomId)
             }
 
-            io.to(roomId).emit('userDisconnectedRoom', {
-                totalConnectedUsers: totalRoomUsers
-            });
+            io.to(roomId).emit('userLeftRoom', {
+                userId: socket.id,
+                totalConnectedUsers: Array.from(io.sockets.adapter.rooms.get(roomId) || [])
+            })
         } catch (e) {
             console.log(e)
             return e
