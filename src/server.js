@@ -1,17 +1,17 @@
-const { Server } = require('socket.io')
+const {Server} = require('socket.io')
 
 
 const express = require('express')
 const app = express()
 
 const cors = require('cors')
-app.use(cors({ origin: '*' }))
+app.use(cors({origin: '*'}))
 
 const parser = require('body-parser')
-app.use(parser.json({ limit: '500kb' }))
-app.use(parser.urlencoded({ limit: '500kb', extended: true }))
+app.use(parser.json({limit: '500kb'}))
+app.use(parser.urlencoded({limit: '500kb', extended: true}))
 
-app.get('/socket',() =>  {
+app.get('/socket', () => {
     console.log('Connected to server.')
 })
 
@@ -32,25 +32,20 @@ const rooms = []
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`)
 
-    socket.on('joinRoom',  async (data) => {
-
-        try{
+    socket.on('joinRoom', async (data) => {
+        try {
             let roomId;
-            const filteredData = rooms.filter(el => el.eventId === data.eventId)
+            const filteredData = rooms.find(el => el.eventId === data.eventId && el.users.includes(socket.id));
             if (filteredData) {
-                roomId = filteredData.roomId
+                roomId = filteredData.roomId;
             } else {
                 roomId = Math.random().toString(36).substring(2, 7);
-                rooms.push({eventId: data.eventId, roomId: roomId});
+                rooms.push({eventId: data.eventId, roomId: roomId, users: [socket.id]});
             }
 
             const roomExists = io.sockets.adapter.rooms.has(roomId);
             if (!roomExists) {
-                io.emit('userJoinedRoom', {
-                    roomId: roomId,
-                    position: data.position,
-                    totalConnectedUsers: [],
-                });
+                return 'Harita bulunmamaktadır.'
             }
 
             socket.join(roomId);
@@ -63,25 +58,23 @@ io.on('connection', (socket) => {
                 totalConnectedUsers: totalRoomUsers
             });
 
-
             io.to(`${socket.id}`).emit('roomJoined', {
                 status: 'OK',
             });
-        }catch (e) {
+        } catch (e) {
             console.log(e)
             return e
         }
     });
 
 
-
-    socket.on('updateLocation',  (data) => {
+    socket.on('updateLocation', (data) => {
         io.emit('updateLocationResponse', data)
     })
 
-    socket.on('disconnect',  async (data) => {
+    socket.on('disconnectRoom', async (data) => {
         console.log(`User disconnected: ${socket.id}`)
-        try{
+        try {
             const roomId = socket.roomId;
             if (roomId) {
                 socket.leave(roomId);
@@ -89,14 +82,14 @@ io.on('connection', (socket) => {
             }
 
             const totalRoomUsers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
-            if(totalRoomUsers.length === 0){
+            if (totalRoomUsers.length === 0) {
                 io.in(roomId).socketsLeave(roomId)
             }
 
             io.to(roomId).emit('userDisconnectedRoom', {
                 totalConnectedUsers: totalRoomUsers
             });
-        }catch (e) {
+        } catch (e) {
             console.log(e)
             return e
         }
