@@ -63,10 +63,6 @@ io.on('connection', (socket) => {
                 totalConnectedUsers: totalRoomUsers
             });
 
-            io.to(roomId).emit('userJoinedRoom', {
-                userId: socket.id,
-                totalConnectedUsers: totalRoomUsers
-            });
 
             io.to(`${socket.id}`).emit('roomJoined', {
                 status: 'OK',
@@ -89,6 +85,7 @@ io.on('connection', (socket) => {
             const roomId = socket.roomId;
             if (roomId) {
                 socket.leave(roomId);
+                delete socket.roomId
             }
 
             const totalRoomUsers = Array.from(io.sockets.adapter.rooms.get(roomId) || [])
