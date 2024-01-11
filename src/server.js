@@ -16,7 +16,7 @@ app.get('/socket', () => {
 })
 
 
-const server = app.listen(5041, () => {
+const server = app.listen(5042, () => {
     console.log(`Socketio Backend Running!`)
     console.log(`Ortam: ${process.env.NODE_ENV}`)
     console.log(`Sunucu Saati: ${new Date()}`)
@@ -35,12 +35,12 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', async (data) => {
         try {
             let roomId;
-            const filteredData = rooms.find(el => el.eventId === data.eventId && el.users.includes(socket.id));
+            const filteredData = rooms.find(el => el.eventId === data.eventId);
             if (filteredData) {
                 roomId = filteredData.roomId;
             } else {
                 roomId = Math.random().toString(36).substring(2, 7);
-                rooms.push({eventId: data.eventId, roomId: roomId, users: [socket.id]});
+                rooms.push({eventId: data.eventId, roomId: roomId});
             }
 
             const roomExists = io.sockets.adapter.rooms.has(roomId);
@@ -55,8 +55,6 @@ io.on('connection', (socket) => {
 
             const totalRoomUsers = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
             io.to(roomId).emit('userJoinedRoom', {
-                userId: socket.id,
-                position: data.position,
                 totalConnectedUsers: totalRoomUsers
             });
 
